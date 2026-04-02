@@ -22,7 +22,10 @@ const server = http.createServer(app);
 // ✅ FIX: Add CORS config directly to Socket.IO
 const io = socketio(server, {
   cors: {
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+    origin: [
+      "http://localhost:3000",
+      "http://breachatrix.vercel.app"
+    ],
     credentials: true,
   },
 });
@@ -31,7 +34,10 @@ app.set("io", io); // ✅ THIS is the key
 
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || "http://localhost:3000",
+     origin: [
+      "http://localhost:3000",
+      "http://breachatrix.vercel.app"
+    ],
     credentials: true,
   })
 );
