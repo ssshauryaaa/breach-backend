@@ -24,7 +24,7 @@ const io = socketio(server, {
   cors: {
     origin: [
       "http://localhost:3000",
-      "http://breachatrix.vercel.app"
+  "https://breachatrix.vercel.app"
     ],
     credentials: true,
   },
@@ -36,7 +36,7 @@ app.use(
   cors({
      origin: [
       "http://localhost:3000",
-      "http://breachatrix.vercel.app"
+  "https://breachatrix.vercel.app"
     ],
     credentials: true,
   })
