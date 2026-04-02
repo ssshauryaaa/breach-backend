@@ -1,0 +1,151 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────────────────────────────
+// ENUMS
+// ───────────────────────────────────────────────
+
+enum TeamRole {
+  RED
+  BLUE
+}
+
+enum AttackType {
+  SQL_INJECTION
+  MISCONFIG
+  SENSITIVE_DATA_EXPOSURE
+  BROKEN_AUTHENTICATION
+  JWT_VULNERABILITY
+}
+
+enum ScoreEventType {
+  BONUS    // Admin awarded bonus (creativity, advanced technique, clean mitigation)
+  PENALTY  // Admin deducted points (rule violation, unsportsmanlike conduct)
+  MANUAL   // Generic manual adjustment via adjustScore endpoint
+}
+
+enum AnnouncementType {
+  INFO     // General info — round starting, rule reminders
+  WARNING  // Yellow flag — heads up to participants
+  ALERT    // Red flag — urgent (cheat detected, server issue)
+  SUCCESS  // Green flag — milestone reached, winner declared
+}
+
+// ───────────────────────────────────────────────
+// MODELS
+// ───────────────────────────────────────────────
+
+model User {
+  id       String  @id @default(uuid())
+  username String  @unique
+  password String
+  role     String
+
+  teamMember TeamMember?
+
+  createdAt DateTime @default(now())
+}
+
+model Team {
+  id    String   @id @default(uuid())
+  name  String   @unique
+  role  TeamRole
+  score Int      @default(0)
+
+  members         TeamMember[]
+  attacksSent     AttackLog[]    @relation("Attacker")
+  attacksReceived AttackLog[]    @relation("Target")
+  defenses        DefenseLog[]
+  scoreHistory    ScoreHistory[]
+
+  redMatchups Matchup[] @relation("RedMatchup")
+  blueMatchups Matchup[] @relation("BlueMatchup")
+
+  createdAt DateTime @default(now())
+}
+
+model TeamMember {
+  id     String @id @default(uuid())
+  userId String @unique
+  teamId String
+
+  user User @relation(fields: [userId], references: [id])
+  team Team @relation(fields: [teamId], references: [id])
+}
+
+model AttackLog {
+  id           String     @id @default(uuid())
+  type         AttackType
+  success      Boolean
+  attackerId   String
+  targetTeamId String
+
+  attacker Team @relation("Attacker", fields: [attackerId], references: [id])
+  target   Team @relation("Target", fields: [targetTeamId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+model DefenseLog {
+  id      String     @id @default(uuid())
+  type    AttackType
+  success Boolean
+  teamId  String
+
+  team Team @relation(fields: [teamId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+// ───────────────────────────────────────────────
+// NEW: Score History
+// Full audit trail of every score change per team
+// ───────────────────────────────────────────────
+
+model ScoreHistory {
+  id     String         @id @default(uuid())
+  teamId String
+  delta  Int            // positive = points gained, negative = points lost
+  reason String         // mandatory note explaining why (e.g. "Chained XSS exploit — creative bonus")
+  type   ScoreEventType
+
+  team Team @relation(fields: [teamId], references: [id])
+
+  createdAt DateTime @default(now())
+}
+
+// ───────────────────────────────────────────────
+// NEW: Announcements
+// Admin broadcasts to all participants (shown on Red + Blue dashboards)
+// ───────────────────────────────────────────────
+
+model Announcement {
+  id      String           @id @default(uuid())
+  title   String
+  message String
+  type    AnnouncementType @default(INFO)
+  pinned  Boolean          @default(false) // pinned announcements surface at top of feed
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Matchup {
+  id         String   @id @default(cuid())
+  redTeamId  String
+  blueTeamId String
+  targetUrl  String?
+  repoUrl    String?
+  roundLabel String?
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  redTeam    Team     @relation("RedMatchup",  fields: [redTeamId],  references: [id])
+  blueTeam   Team     @relation("BlueMatchup", fields: [blueTeamId], references: [id])
+}
