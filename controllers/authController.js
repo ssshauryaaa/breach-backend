@@ -24,11 +24,11 @@ exports.register = async (req, res) => {
 
     // ✅ SET COOKIE (same as login)
     res.cookie("token", token, {
-      httpOnly: true,
-      secure: false,
-      sameSite: "strict",
-      maxAge: 1000 * 60 * 60 * 2,
-    });
+  httpOnly: true,
+  secure: true,        // ✅ REQUIRED for HTTPS (Render)
+  sameSite: "none",    // ✅ REQUIRED for cross-site
+  maxAge: 1000 * 60 * 60 * 2,
+});
 
     // ✅ RESPONSE
     res.status(201).json({
@@ -60,12 +60,12 @@ exports.login = async (req, res) => {
     const token = generateToken({ id: user.id, role: user.role });
 
     // ✅ Set token cookie
-    res.cookie("token", token, {
-      httpOnly: true, // JS cannot read it
-      secure: false, // must be false on localhost
-      sameSite: "strict", // CSRF protection
-      maxAge: 1000 * 60 * 60 * 2, // 2 hours
-    });
+   res.cookie("token", token, {
+  httpOnly: true,
+  secure: true,        // ✅ REQUIRED for HTTPS (Render)
+  sameSite: "none",    // ✅ REQUIRED for cross-site
+  maxAge: 1000 * 60 * 60 * 2,
+});
 
     // Also return a message if you want
     res.json({ message: "Logged in successfully" });
